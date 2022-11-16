@@ -1,0 +1,47 @@
+import type {TsrpcConfig} from 'tsrpc-cli';
+import * as path from "path";
+
+export default <TsrpcConfig>{
+    // Generate ServiceProto
+    proto: [
+        {
+            ptlDir: 'src/shared/protocols', // Protocol dir
+            output: 'src/shared/protocols/serviceProto.ts', // Path for generated ServiceProto
+            apiDir: 'src/api',   // API dir
+            docDir: 'docs',     // API documents dir
+            ptlTemplate: {baseFile: 'src/shared/protocols/base.ts'},
+            // msgTemplate: { baseFile: 'src/shared/protocols/base.ts' },
+            resolveModule: v => {
+                if (v.startsWith('@prisma/client')) {
+                    return path.join(__dirname, 'node_modules', '.prisma', 'client', v.replace('@prisma/client', 'index.d.ts'));
+                }
+                return v;
+            }
+        }
+    ],
+    // Sync shared code
+    sync: [
+        {
+            from: 'src/shared',
+            to: '../frontend/src/shared',
+            type: 'symlink'     // Change this to 'copy' if your environment not support symlink
+        }
+    ],
+    // Dev server
+    dev: {
+        autoProto: true,        // Auto regenerate proto
+        autoSync: true,         // Auto sync when file changed
+        autoApi: true,          // Auto create API when ServiceProto updated
+        watch: 'src',           // Restart dev server when these files changed
+        entry: 'src/index.ts',  // Dev server command: node -r ts-node/register {entry}
+    },
+    // Build config
+    build: {
+        autoProto: true,        // Auto generate proto before build
+        autoSync: true,         // Auto sync before build
+        autoApi: true,          // Auto generate API before build
+        outDir: 'dist',         // Clean this dir before build
+    },
+
+    verbose: true
+}
